@@ -34,6 +34,7 @@ Provider for storing information about a fuzz test binary.
     fields = {
         "binary_file": "The instrumented fuzz test executable.",
         "binary_runfiles": "The runfiles of the fuzz test executable.",
+        "binary_workspace": "The name of the workspace of the fuzz test executable.",
         "corpus_dir": "The directory of the corpus files used as input seeds.",
         "dictionary_file": "The dictionary file to use in fuzzing runs.",
         "engine_info": "The `FuzzingEngineInfo` provider of the fuzzing " +
@@ -108,9 +109,10 @@ def _fuzzing_binary_impl(ctx):
     )
     if ctx.attr._instrument_binary:
         # The attribute is a list if a transition is attached.
-        binary_runfiles = ctx.attr.binary[0][DefaultInfo].default_runfiles
+        binary = ctx.attr.binary[0]
     else:
-        binary_runfiles = ctx.attr.binary[DefaultInfo].default_runfiles
+        binary = ctx.attr.binary
+    binary_runfiles = binary[DefaultInfo].default_runfiles
     other_runfiles = []
     if ctx.file.corpus:
         other_runfiles.append(ctx.file.corpus)
@@ -126,6 +128,10 @@ def _fuzzing_binary_impl(ctx):
         FuzzingBinaryInfo(
             binary_file = ctx.executable.binary,
             binary_runfiles = binary_runfiles,
+            # If used within rules_fuzzing, the workspace_name of the binary can
+            # be the empty string (it is "__main__" when used from another
+            # workspace with no name).
+            binary_workspace = binary.label.workspace_name or ctx.workspace_name,
             corpus_dir = ctx.file.corpus,
             dictionary_file = ctx.file.dictionary,
             engine_info = ctx.attr.engine[FuzzingEngineInfo],

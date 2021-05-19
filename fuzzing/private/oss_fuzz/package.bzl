@@ -18,23 +18,68 @@ load("//fuzzing/private:binary.bzl", "FuzzingBinaryInfo")
 
 def _oss_fuzz_package_impl(ctx):
     output_archive = ctx.actions.declare_file(ctx.label.name + ".tar")
+    base_name = ctx.attr.base_name
     binary_info = ctx.attr.binary[FuzzingBinaryInfo]
+    binary_path = binary_info.binary_file.path
+    binary_short_path = binary_info.binary_file.short_path
+    binary_workdir = "{base_name}.runfiles/{binary_workspace}".format(
+        base_name = base_name,
+        binary_workspace = binary_info.binary_workspace,
+    )
 
-    action_inputs = [binary_info.binary_file]
+    # Create a wrapper that executes the actual fuzz test binary with the
+    # working directory set to what it would be in the Bazel runfiles tree.
+    # Note: ClusterFuzz may execute fuzz tests with a working directory
+    # different from the containing directory.
+    launcher = ctx.actions.declare_file(ctx.label.name + "_launcher.sh")
+    launcher_script = """#!/bin/sh
+echo "this_dir=$(dirname "$0")
+# Allow the Bazel runfiles libraries to find the tree.
+export RUNFILES_DIR=$(readlink -f "$this_dir/{base_name}.runfiles")
+# LLVMFuzzerTestOneInput - OSS-Fuzz needs this string literal
+# to appear somewhere in the script so it is recognized as a
+# fuzz target.
+cd $this_dir/{binary_workdir}
+exec {binary_short_path} $@"
+"""
+    ctx.actions.write(launcher, launcher_script.format(
+        base_name = base_name,
+        binary_short_path = binary_short_path,
+        binary_workdir = binary_workdir,
+    ), True)
+    archive_inputs = [launcher]
+
+    binary_runfiles = binary_info.binary_runfiles.files.to_list()
+    binary_runfiles_snippet = """
+    mkdir -p "$(dirname "$STAGING_DIR/{binary_workdir}/{runfile_short_path}")"
+    ln -s "$(pwd)/{runfile_path}" "$STAGING_DIR/{binary_workdir}/{runfile_short_path}"
+    """
+    binary_runfiles_script = "".join([
+        binary_runfiles_snippet.format(
+            binary_workdir = binary_workdir,
+            runfile_path = runfile.path,
+            runfile_short_path = runfile.short_path,
+        )
+        for runfile in binary_runfiles
+    ])
+    archive_inputs += binary_runfiles
+
     if binary_info.corpus_dir:
-        action_inputs.append(binary_info.corpus_dir)
+        archive_inputs.append(binary_info.corpus_dir)
     if binary_info.dictionary_file:
-        action_inputs.append(binary_info.dictionary_file)
+        archive_inputs.append(binary_info.dictionary_file)
     ctx.actions.run_shell(
         outputs = [output_archive],
-        inputs = action_inputs,
+        inputs = archive_inputs,
         command = """
+            set -e
             declare -r STAGING_DIR="$(mktemp --directory -t oss-fuzz-pkg.XXXXXXXXXX)"
             function cleanup() {{
                 rm -rf "$STAGING_DIR"
             }}
             trap cleanup EXIT
-            ln -s "$(pwd)/{binary_path}" "$STAGING_DIR/{base_name}"
+            {binary_runfiles_script}
+            ln -s "$(pwd)/{launcher_path}" "$STAGING_DIR/{base_name}"
             if [[ -n "{corpus_dir}" ]]; then
                 pushd "{corpus_dir}" >/dev/null
                 zip --quiet -r "$STAGING_DIR/{base_name}_seed_corpus.zip" ./*
@@ -48,10 +93,11 @@ def _oss_fuzz_package_impl(ctx):
             fi
             tar -chf "{output}" -C "$STAGING_DIR" .
         """.format(
-            base_name = ctx.attr.base_name,
-            binary_path = binary_info.binary_file.path,
+            base_name = base_name,
+            binary_runfiles_script = binary_runfiles_script,
             corpus_dir = binary_info.corpus_dir.path if binary_info.corpus_dir else "",
             dictionary_path = binary_info.dictionary_file.path if binary_info.dictionary_file else "",
+            launcher_path = launcher.path,
             options_path = binary_info.options_file.path if binary_info.options_file else "",
             output = output_archive.path,
         ),
@@ -62,9 +108,6 @@ oss_fuzz_package = rule(
     implementation = _oss_fuzz_package_impl,
     doc = """
 Packages a fuzz test in a TAR archive compatible with the OSS-Fuzz format.
-
-> NOTE: The current implementation does not yet support packaging the
-> binary runfiles.
 """,
     attrs = {
         "binary": attr.label(

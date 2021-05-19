@@ -169,6 +169,8 @@ def cc_fuzz_test(
           binary rule.
     """
 
+    print("native.repository_name(): " + native.repository_name())
+
     # Append the '_' suffix to the raw target to dissuade users from referencing
     # this target directly. Instead, the binary should be built through the
     # instrumented configuration.

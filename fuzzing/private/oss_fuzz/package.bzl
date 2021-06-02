@@ -21,35 +21,16 @@ def _oss_fuzz_package_impl(ctx):
     base_name = ctx.attr.base_name
     binary_info = ctx.attr.binary[FuzzingBinaryInfo]
     binary_path = binary_info.binary_file.path
-    binary_short_path = binary_info.binary_file.short_path
     binary_workdir = "{base_name}.runfiles/{binary_workspace}".format(
         base_name = base_name,
         binary_workspace = binary_info.binary_workspace,
     )
 
-    # Create a wrapper that executes the actual fuzz test binary with the
-    # working directory set to what it would be in the Bazel runfiles tree.
-    # Note: ClusterFuzz may execute fuzz tests with a working directory
-    # different from the containing directory.
-    launcher = ctx.actions.declare_file(ctx.label.name + "_launcher.sh")
-    launcher_script = """#!/bin/sh
-echo "this_dir=$(dirname "$0")
-# Allow the Bazel runfiles libraries to find the tree.
-export RUNFILES_DIR=$(readlink -f "$this_dir/{base_name}.runfiles")
-# LLVMFuzzerTestOneInput - OSS-Fuzz needs this string literal
-# to appear somewhere in the script so it is recognized as a
-# fuzz target.
-cd $this_dir/{binary_workdir}
-exec {binary_short_path} $@"
-"""
-    ctx.actions.write(launcher, launcher_script.format(
-        base_name = base_name,
-        binary_short_path = binary_short_path,
-        binary_workdir = binary_workdir,
-    ), True)
-    archive_inputs = [launcher]
-
-    binary_runfiles = binary_info.binary_runfiles.files.to_list()
+    binary_runfiles = [
+        runfile
+        for runfile in binary_info.binary_runfiles.files.to_list()
+        if runfile != binary_info.binary_file
+    ]
     binary_runfiles_snippet = """
     mkdir -p "$(dirname "$STAGING_DIR/{binary_workdir}/{runfile_short_path}")"
     ln -s "$(pwd)/{runfile_path}" "$STAGING_DIR/{binary_workdir}/{runfile_short_path}"
@@ -62,8 +43,10 @@ exec {binary_short_path} $@"
         )
         for runfile in binary_runfiles
     ])
-    archive_inputs += binary_runfiles
+    print(binary_runfiles_script)
+    archive_inputs = binary_runfiles
 
+    archive_inputs += [binary_info.binary_file]
     if binary_info.corpus_dir:
         archive_inputs.append(binary_info.corpus_dir)
     if binary_info.dictionary_file:
@@ -78,8 +61,8 @@ exec {binary_short_path} $@"
                 rm -rf "$STAGING_DIR"
             }}
             trap cleanup EXIT
+            ln -s "$(pwd)/{binary_path}" "$STAGING_DIR/{base_name}"
             {binary_runfiles_script}
-            ln -s "$(pwd)/{launcher_path}" "$STAGING_DIR/{base_name}"
             if [[ -n "{corpus_dir}" ]]; then
                 pushd "{corpus_dir}" >/dev/null
                 zip --quiet -r "$STAGING_DIR/{base_name}_seed_corpus.zip" ./*
@@ -94,10 +77,10 @@ exec {binary_short_path} $@"
             tar -chf "{output}" -C "$STAGING_DIR" .
         """.format(
             base_name = base_name,
+            binary_path = binary_path,
             binary_runfiles_script = binary_runfiles_script,
             corpus_dir = binary_info.corpus_dir.path if binary_info.corpus_dir else "",
             dictionary_path = binary_info.dictionary_file.path if binary_info.dictionary_file else "",
-            launcher_path = launcher.path,
             options_path = binary_info.options_file.path if binary_info.options_file else "",
             output = output_archive.path,
         ),

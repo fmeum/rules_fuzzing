@@ -72,7 +72,7 @@ def rules_fuzzing_dependencies(oss_fuzz = True, honggfuzz = True, jazzer = False
         maybe(
             http_archive,
             name = "jazzer",
-            sha256 = "797d29ceae19ce36a95f5fbfd995bca2815256c8d5f7a705e84897336a4fea61",
-            strip_prefix = "jazzer-f1c4bb507733710bbf292e474e173fcd0d6e8ff5",
-            url = "https://github.com/CodeIntelligenceTesting/jazzer/archive/f1c4bb507733710bbf292e474e173fcd0d6e8ff5.zip",
+            sha256 = "26d9c50354fa74328f5914f92d1d5f253e3d3d960bbbc2736cdfbd5f0a88fd18",
+            strip_prefix = "jazzer-008527b52052e216312c7e5c83fcbab73ca1c7ae",
+            url = "https://github.com/CodeIntelligenceTesting/jazzer/archive/008527b52052e216312c7e5c83fcbab73ca1c7ae.zip",
         )

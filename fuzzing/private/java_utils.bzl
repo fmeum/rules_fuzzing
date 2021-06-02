@@ -25,6 +25,7 @@ load(
     "//fuzzing:instrum_opts.bzl",
     "sanitizer_configs",
 )
+load("//fuzzing/private:util.bzl", "runfile_path")
 
 # A Starlark reimplementation of a part of Bazel's JavaCommon#determinePrimaryClass.
 def determine_primary_class(srcs, name):
@@ -93,10 +94,22 @@ def _java_segment_index(path_segments):
 def _jazzer_fuzz_binary_script(ctx):
     script = ctx.actions.declare_file(ctx.label.name)
 
-    script_template = """
-exec "{driver}" \
-    --agent_path="{agent}" \
-    --cp="{deploy_jar}" \
+    script_template = """#!/bin/bash
+# --- begin runfiles.bash initialization v2 ---
+# Copy-pasted from the Bazel Bash runfiles library v2 and escaped for Python format().
+set -uo pipefail; f=bazel_tools/tools/bash/runfiles/runfiles.bash
+source "${{RUNFILES_DIR:-/dev/null}}/$f" 2>/dev/null || \
+ source "$(grep -sm1 "^$f " "${{RUNFILES_MANIFEST_FILE:-/dev/null}}" | cut -f2- -d' ')" 2>/dev/null || \
+ source "$0.runfiles/$f" 2>/dev/null || \
+ source "$(grep -sm1 "^$f " "$0.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+ source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+ {{ echo>&2 "ERROR: cannot find $f"; exit 1; }}; f=; set -e
+# --- end runfiles.bash initialization v2 ---
+# LLVMFuzzerTestOneInput - OSS-Fuzz needs this string literal
+# to appear somewhere in the script so it is recognized as a
+# fuzz target.
+exec "$(rlocation {driver})" \
+    --cp="$(rlocation {deploy_jar})" \
     --jvm_args="-Djava.library.path={library_path}" \
     "$@"
 """
@@ -126,11 +139,15 @@ exec "{driver}" \
     native_dirs = [path[:path.rfind("/")] for path in native_paths]
 
     script_content = script_template.format(
-        driver = ctx.executable.driver.short_path,
-        agent = ctx.file._agent.short_path,
-        deploy_jar = ctx.file.target_deploy_jar.short_path,
+        driver = runfile_path(ctx, ctx.executable.driver),
+        deploy_jar = runfile_path(ctx, ctx.file.target_deploy_jar),
         library_path = ":".join(native_dirs),
+        # If used within rules_fuzzing, the workspace_name of the binary can be
+        # the empty string (it is "__main__" when used from another workspace
+        # with no name).
+        workdir = ctx.label.workspace_name or ctx.workspace_name,
     )
+    print(script_content)
     ctx.actions.write(script, script_content, is_executable = True)
     return script
 
@@ -162,6 +179,7 @@ def _jazzer_fuzz_binary_impl(ctx):
     runfiles = ctx.runfiles()
     runfiles = runfiles.merge(ctx.attr.driver[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.runfiles([ctx.file._agent]))
+    runfiles = runfiles.merge(ctx.runfiles([ctx.file._bash_runfiles_lib]))
     runfiles = runfiles.merge(_filter_target_runfiles(ctx, ctx.attr.target[0]))
     runfiles = runfiles.merge(ctx.runfiles([ctx.file.target_deploy_jar]))
     for native_dep in ctx.attr.transitive_native_deps:
@@ -178,6 +196,10 @@ Rule that creates a binary that invokes Jazzer on the specified target.
             default = Label("@jazzer//agent:jazzer_agent_deploy.jar"),
             doc = "The Jazzer agent used to instrument the target.",
             allow_single_file = [".jar"],
+        ),
+        "_bash_runfiles_lib": attr.label(
+            default = Label("@bazel_tools//tools/bash/runfiles"),
+            allow_single_file = [".bash"],
         ),
         "driver": attr.label(
             default = Label("@jazzer//driver:jazzer_driver"),

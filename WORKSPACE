@@ -24,7 +24,7 @@ rules_fuzzing_dependencies(jazzer = True)
 
 load("@rules_fuzzing//fuzzing:init.bzl", "rules_fuzzing_init")
 
-rules_fuzzing_init()
+rules_fuzzing_init(atheris = True)
 
 load("@jazzer//:repositories.bzl", "jazzer_dependencies")
 

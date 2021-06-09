@@ -72,3 +72,7 @@ java_fuzzing_engine(
     library = "@jazzer//agent:jazzer_api_compile_only",
     visibility = ["//visibility:public"],
 )
+
+# Atheris specification.
+#################################
+

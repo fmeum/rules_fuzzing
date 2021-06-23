@@ -26,6 +26,12 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
+label_flag(
+    name = "py_engine",
+    build_setting_default = "//fuzzing/engines:atheris",
+    visibility = ["//visibility:public"],
+)
+
 string_flag(
     name = "cc_engine_instrumentation",
     build_setting_default = "none",

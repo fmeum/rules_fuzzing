@@ -20,7 +20,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 load("@rules_fuzzing//fuzzing:repositories.bzl", "rules_fuzzing_dependencies")
 
-rules_fuzzing_dependencies(jazzer = True)
+rules_fuzzing_dependencies(jazzer = True, atheris = True)
 
 load("@rules_fuzzing//fuzzing:init.bzl", "rules_fuzzing_init")
 
@@ -62,3 +62,6 @@ http_archive(
 load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
 
 stardoc_repositories()
+
+load("@pybind11_bazel//:python_configure.bzl", "python_configure")
+python_configure(name = "local_config_python")

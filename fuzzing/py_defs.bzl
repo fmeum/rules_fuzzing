@@ -12,15 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Dependency initialization utilities."""
+"""Public definitions for Python fuzzing rules.
 
-load("@rules_python//python:pip.bzl", "pip_install")
-load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+Definitions outside this file are private unless otherwise noted, and may
+change without notice.
+"""
 
-def rules_fuzzing_init():
-    pip_install(
-        name = "fuzzing_py_deps",
-        extra_pip_args = ["--require-hashes"],
-        requirements = "@rules_fuzzing//fuzzing:requirements.txt",
-    )
-    bazel_skylib_workspace()
+load(
+    "//fuzzing/private:fuzz_test.bzl",
+    _fuzzing_decoration = "fuzzing_decoration",
+    _py_fuzz_test = "py_fuzz_test",
+)
+load(
+    "//fuzzing/private:engine.bzl",
+    _FuzzingEngineInfo = "FuzzingEngineInfo",
+    _py_fuzzing_engine = "py_fuzzing_engine",
+)
+
+py_fuzz_test = _py_fuzz_test
+py_fuzzing_engine = _py_fuzzing_engine
+
+fuzzing_decoration = _fuzzing_decoration
+
+FuzzingEngineInfo = _FuzzingEngineInfo

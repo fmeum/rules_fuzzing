@@ -21,6 +21,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("//fuzzing/private:common.bzl", "fuzzing_corpus", "fuzzing_dictionary", "fuzzing_launcher")
 load("//fuzzing/private:binary.bzl", "fuzzing_binary", "fuzzing_binary_uninstrumented")
 load("//fuzzing/private:java_utils.bzl", "determine_primary_class", "jazzer_fuzz_binary")
+load("//fuzzing/private:py_utils.bzl", "atheris_fuzz_binary")
 load("//fuzzing/private:regression.bzl", "fuzzing_regression_test")
 load("//fuzzing/private/oss_fuzz:package.bzl", "oss_fuzz_package")
 
@@ -290,6 +291,76 @@ def java_fuzz_test(
         name = name,
         raw_binary = raw_binary_name,
         # jazzer_fuzz_binary already instrumented the native dependencies.
+        instrument_binary = False,
+        engine = engine,
+        corpus = corpus,
+        dicts = dicts,
+        test_tags = (tags or []) + [
+            "fuzz-test",
+        ],
+    )
+
+def py_fuzz_test(
+        name,
+        corpus = None,
+        dicts = None,
+        engine = "@rules_fuzzing//fuzzing:py_engine",
+        tags = None,
+        **binary_kwargs):
+    """Defines a Python fuzz test and a few associated tools and metadata.
+
+    For each fuzz test `<name>`, this macro defines a number of targets. The
+    most relevant ones are:
+
+    * `<name>`: A test that executes the fuzzer binary against the seed corpus
+      (or on an empty input if no corpus is specified).
+    * `<name>_bin`: The instrumented fuzz test executable. Use this target
+      for debugging or for accessing the complete command line interface of the
+      fuzzing engine. Most developers should only need to use this target
+      rarely.
+    * `<name>_run`: An executable target used to launch the fuzz test using a
+      simpler, engine-agnostic command line interface.
+    * `<name>_oss_fuzz`: Generates a `<name>_oss_fuzz.tar` archive containing
+      the fuzz target executable and its associated resources (corpus,
+      dictionary, etc.) in a format suitable for unpacking in the $OUT/
+      directory of an OSS-Fuzz build. This target can be used inside the
+      `build.sh` script of an OSS-Fuzz project.
+
+    Args:
+        name: A unique name for this target. Required.
+        corpus: A list containing corpus files.
+        dicts: A list containing dictionaries.
+        engine: A label pointing to the fuzzing engine to use.
+        tags: Tags set on the fuzzing regression test.
+        **binary_kwargs: Keyword arguments directly forwarded to the fuzz test
+          binary rule.
+    """
+
+    # Append the '_' suffix to the raw target to dissuade users from referencing
+    # this target directly. Instead, the binary should be built through the
+    # instrumented configuration.
+    raw_target_name = name + "_target_"
+
+    binary_kwargs.setdefault("deps", []).append(engine)
+    native.py_binary(
+        name = raw_target_name,
+        **binary_kwargs
+    )
+
+    raw_binary_name = name + "_raw_"
+    atheris_fuzz_binary(
+        name = raw_binary_name,
+        sanitizer_options = select({
+            "@rules_fuzzing//fuzzing/private:use_oss_fuzz": "@rules_fuzzing//fuzzing/private:oss_fuzz_jazzer_sanitizer_options.sh",
+            "//conditions:default": "@rules_fuzzing//fuzzing/private:local_jazzer_sanitizer_options.sh",
+        }),
+        target = raw_target_name,
+    )
+
+    fuzzing_decoration(
+        name = name,
+        raw_binary = raw_binary_name,
+        # atheris_fuzz_binary already instrumented the native dependencies.
         instrument_binary = False,
         engine = engine,
         corpus = corpus,

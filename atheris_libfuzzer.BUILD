@@ -11,34 +11,19 @@ cc_library(
         "-g",
         "-O2",
         "-fno-omit-frame-pointer",
-        "-std=c++11",
+        "-std=c++14",
     ],
+    linkstatic = True,
     visibility = ["//visibility:public"],
     alwayslink = True,
 )
 
 cc_binary(
     name = "asan_with_fuzzer.so",
-    linkopts = [
-        "-fsanitize=address",
-        "-rdynamic",
-    ],
     linkshared = True,
     visibility = ["//visibility:public"],
     deps = [
         ":atheris_libfuzzer",
-    ],
-)
-
-cc_binary(
-    name = "ubsan_with_fuzzer.so",
-    linkopts = [
-        "-fsanitize=undefined",
-        "-rdynamic",
-    ],
-    linkshared = True,
-    visibility = ["//visibility:public"],
-    deps = [
-        ":atheris_libfuzzer",
+        "@rules_fuzzing_sanitizer_libs//:asan",
     ],
 )

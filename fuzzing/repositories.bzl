@@ -17,6 +17,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//fuzzing/private/oss_fuzz:repository.bzl", "oss_fuzz_repository")
+load("//fuzzing/private/sanitizer_libs:repository.bzl", "sanitizer_libs_repository")
 
 def rules_fuzzing_dependencies(
         oss_fuzz = True,
@@ -116,4 +117,9 @@ def rules_fuzzing_dependencies(
             sha256 = "8e6c99e482bb16a450165176c2d881804976a2d770e0445af4375e78a1fbf19c",
             strip_prefix = "llvm-project-llvmorg-12.0.0/compiler-rt/lib/fuzzer",
             url = "https://github.com/llvm/llvm-project/archive/llvmorg-12.0.0.tar.gz",
+        )
+
+        maybe(
+            sanitizer_libs_repository,
+            name = "rules_fuzzing_sanitizer_libs",
         )

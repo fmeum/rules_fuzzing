@@ -38,7 +38,10 @@ def rules_fuzzing_dependencies(
     maybe(
         http_archive,
         name = "rules_python",
-        url = "https://github.com/bazelbuild/rules_python/releases/download/0.3.0/rules_python-0.3.0.tar.gz",
+        urls = [
+            "https://github.com/bazelbuild/rules_python/releases/download/0.3.0/rules_python-0.3.0.tar.gz",
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_python/releases/download/0.3.0/rules_python-0.3.0.tar.gz",
+        ],
         sha256 = "934c9ceb552e84577b0faf1e5a2f0450314985b4d8712b2b70717dc679fdc01b",
     )
     maybe(
@@ -108,6 +111,49 @@ def rules_fuzzing_dependencies(
             sha256 = "8ff2fff22df038f5cd02cea8af56622bc67f5b64534f1b83b9f133b8366acff2",
             strip_prefix = "pybind11-2.6.2",
             url = "https://github.com/pybind/pybind11/archive/v2.6.2.tar.gz",
+        )
+
+        maybe(
+            http_archive,
+            name = "python3",
+            build_file = "@rules_fuzzing//:python3.BUILD",
+            strip_prefix = "Python-3.9.3",
+            urls = [
+                "https://www.python.org/ftp/python/3.9.3/Python-3.9.3.tgz",
+            ],
+            sha256 = "3afeb61a45b5a2e6f1c0f621bd8cf925a4ff406099fdb3d8c97b993a5f43d048",
+        )
+
+        maybe(
+            http_archive,
+            name = "rules_foreign_cc",
+            sha256 = "e14a159c452a68a97a7c59fa458033cc91edb8224516295b047a95555140af5f",
+            strip_prefix = "rules_foreign_cc-0.4.0",
+            url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.4.0.tar.gz",
+        )
+
+        maybe(
+            http_archive,
+            name = "zlib",
+            build_file = "@rules_fuzzing//:zlib.BUILD",
+            sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+            strip_prefix = "zlib-1.2.11",
+            urls = [
+                "https://zlib.net/zlib-1.2.11.tar.gz",
+                "https://storage.googleapis.com/mirror.tensorflow.org/zlib.net/zlib-1.2.11.tar.gz",
+            ],
+        )
+
+        maybe(
+            http_archive,
+            name = "openssl",
+            build_file = "@rules_fuzzing//:openssl.BUILD",
+            sha256 = "5c9ca8774bd7b03e5784f26ae9e9e6d749c9da2438545077e6b3d755a06595d9",
+            strip_prefix = "openssl-1.1.1h",
+            urls = [
+                "https://www.openssl.org/source/openssl-1.1.1h.tar.gz",
+                "https://github.com/openssl/openssl/archive/OpenSSL_1_1_1h.tar.gz",
+            ],
         )
 
         maybe(

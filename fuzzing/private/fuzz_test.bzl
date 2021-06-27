@@ -23,6 +23,7 @@ load("//fuzzing/private:binary.bzl", "fuzzing_binary", "fuzzing_binary_uninstrum
 load("//fuzzing/private:java_utils.bzl", "determine_primary_class", "jazzer_fuzz_binary")
 load("//fuzzing/private:py_utils.bzl", "atheris_fuzz_binary")
 load("//fuzzing/private:regression.bzl", "fuzzing_regression_test")
+load("//fuzzing/private:util.bzl", "generate_file")
 load("//fuzzing/private/oss_fuzz:package.bzl", "oss_fuzz_package")
 
 def fuzzing_decoration(
@@ -305,6 +306,7 @@ def py_fuzz_test(
         corpus = None,
         dicts = None,
         engine = "@rules_fuzzing//fuzzing:py_engine",
+        main = None,
         tags = None,
         **binary_kwargs):
     """Defines a Python fuzz test and a few associated tools and metadata.
@@ -340,21 +342,53 @@ def py_fuzz_test(
     # this target directly. Instead, the binary should be built through the
     # instrumented configuration.
     raw_target_name = name + "_target_"
+    wrapper_name = name + "_wrapper_"
+    wrapper_py_name = wrapper_name + ".py"
 
-    binary_kwargs.setdefault("deps", []).append(engine)
-    native.py_binary(
+    generate_file(
+        name = wrapper_name,
+        contents = """import sys
+
+import {target_module}
+
+import atheris_no_libfuzzer as atheris
+
+print(sys.path)
+atheris.Setup(sys.argv, {target_module}.TestOneInput)
+atheris.Fuzz()
+        """.format(
+            target_module = name
+        ),
+        output = wrapper_py_name,
+    )
+
+    native.py_library(
         name = raw_target_name,
         **binary_kwargs
+    )
+
+    native.py_binary(
+        name = wrapper_name,
+        main = wrapper_py_name,
+        deps = [
+            raw_target_name,
+            engine,
+        ],
     )
 
     raw_binary_name = name + "_raw_"
     atheris_fuzz_binary(
         name = raw_binary_name,
+        sanitizer_with_fuzzer = select({
+            "@rules_fuzzing//fuzzing/private:use_oss_fuzz": "@rules_fuzzing_oss_fuzz//:sanitizer_with_fuzzer.so",
+            "@rules_fuzzing//fuzzing/private:use_sanitizer_none": "@atheris_libfuzzer//:fuzzer_only.so",
+            "@rules_fuzzing//fuzzing/private:use_sanitizer_asan": "@atheris_libfuzzer//:asan_with_fuzzer.so",
+        }, no_match_error = "Atheris only supports the sanitizer settings \"none\" and \"asan\""),
         sanitizer_options = select({
             "@rules_fuzzing//fuzzing/private:use_oss_fuzz": "@rules_fuzzing//fuzzing/private:oss_fuzz_jazzer_sanitizer_options.sh",
-            "//conditions:default": "@rules_fuzzing//fuzzing/private:local_jazzer_sanitizer_options.sh",
+            "//conditions:default": "@rules_fuzzing//fuzzing/private:local_atheris_sanitizer_options.sh",
         }),
-        target = raw_target_name,
+        target = wrapper_name,
     )
 
     fuzzing_decoration(

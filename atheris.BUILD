@@ -1,8 +1,8 @@
-load("@pybind11_bazel//:build_defs.bzl", "pybind_extension", "pybind_library")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 
-pybind_library(
-    name = "atheris",
-    srcs = [
+filegroup(
+    name = "atheris_srcs",
+    srcs =[
         "atheris.cc",
         "atheris.h",
         "fuzzed_data_provider.cc",
@@ -17,16 +17,33 @@ pybind_library(
 )
 
 pybind_extension(
-    name = "atheris_no_link",
+    name = "atheris",
+    srcs = [
+        ":atheris_srcs",
+    ],
     deps = [
-        ":atheris",
-    ]
+        "@atheris_libfuzzer//:fuzzer_no_main",
+    ],
 )
 
 pybind_extension(
-    name = "atheris",
-    deps = [
-        ":atheris",
-        "@atheris_libfuzzer",
+    name = "atheris_no_libfuzzer",
+    local_defines = [
+        "ATHERIS_MODULE_NAME=atheris_no_libfuzzer",
     ],
+    srcs = [
+        ":atheris_srcs",
+    ],
+)
+
+py_library(
+    name = "atheris",
+    data = [":atheris.so"],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "atheris_no_libfuzzer",
+    data = [":atheris_no_libfuzzer.so"],
+    visibility = ["//visibility:public"],
 )

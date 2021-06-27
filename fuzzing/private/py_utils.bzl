@@ -44,22 +44,26 @@ runfiles_export_envvars
 
     script_format_part = """
 source "$(rlocation {sanitizer_options})"
+PYTHONNOUSERSITE=not_hermetic_dont_use \
+LD_PRELOAD="$(rlocation {sanitizer_with_fuzzer})" \
 exec "$(rlocation {target})" "$@"
 """
 
     script_content = script_literal_part + script_format_part.format(
         target = runfile_path(ctx, ctx.executable.target),
         sanitizer_options = runfile_path(ctx, ctx.file.sanitizer_options),
+        sanitizer_with_fuzzer = runfile_path(ctx, ctx.file.sanitizer_with_fuzzer),
     )
     ctx.actions.write(script, script_content, is_executable = True)
     return script
 
 def _atheris_fuzz_binary_impl(ctx):
     runfiles = ctx.runfiles()
-    # Used by the wrapper script created in _jazzer_fuzz_binary_script.
+    # Used by the wrapper script created in _atheris_fuzz_binary_script.
     runfiles = runfiles.merge(ctx.attr._bash_runfiles_library[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr.target[0][DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.runfiles([ctx.file.sanitizer_options]))
+    runfiles = runfiles.merge(ctx.runfiles([ctx.file.sanitizer_with_fuzzer]))
 
     script = _atheris_fuzz_binary_script(ctx)
     return [DefaultInfo(executable = script, runfiles = runfiles)]
@@ -72,6 +76,11 @@ Rule that creates a binary that invokes Atheris on the specified target.
     attrs = {
         "_bash_runfiles_library": attr.label(
             default = "@bazel_tools//tools/bash/runfiles",
+        ),
+        "sanitizer_with_fuzzer": attr.label(
+            doc = "A shared library containing libFuzzer and the statically " +
+                  "linked sanitizer runtime.",
+            allow_single_file = [".so"],
         ),
         "sanitizer_options": attr.label(
             doc = "A shell script that can export environment variables with " +

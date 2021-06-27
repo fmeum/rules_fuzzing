@@ -70,3 +70,10 @@ build:asan-jazzer --@rules_fuzzing//fuzzing:cc_engine_instrumentation=libfuzzer
 build:asan-jazzer --@rules_fuzzing//fuzzing:cc_engine_sanitizer=asan
 # Workaround for https://github.com/bazelbuild/bazel/issues/11128
 build:asan-jazzer --//fuzzing:cc_engine_sanitizer=asan
+
+# Atheris + ASAN
+build:asan-atheris --//fuzzing:py_engine=//fuzzing/engines:atheris
+build:asan-atheris --@rules_fuzzing//fuzzing:cc_engine_instrumentation=libfuzzer
+build:asan-atheris --@rules_fuzzing//fuzzing:cc_engine_sanitizer=asan
+# Workaround for https://github.com/bazelbuild/bazel/issues/11128
+build:asan-atheris --//fuzzing:cc_engine_sanitizer=asan

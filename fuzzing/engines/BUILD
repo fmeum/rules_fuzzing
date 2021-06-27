@@ -81,6 +81,6 @@ py_fuzzing_engine(
     name = "atheris",
     display_name = "Atheris",
     launcher = "libfuzzer_launcher.sh",
-    library = "@atheris//:atheris_no_link.so",
+    library = "@atheris//:atheris_no_libfuzzer",
     visibility = ["//visibility:public"],
 )

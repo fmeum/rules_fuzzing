@@ -55,6 +55,7 @@ config_setting(
 )
 
 exports_files([
+    "local_atheris_sanitizer_options.sh",
     "local_jazzer_sanitizer_options.sh",
     "oss_fuzz_jazzer_sanitizer_options.sh",
 ])

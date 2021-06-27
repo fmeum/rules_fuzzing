@@ -1,21 +1,34 @@
 cc_library(
-    name = "atheris_libfuzzer",
-    srcs = glob([
-        "*.cpp",
-    ]),
+    name = "fuzzer_no_main",
+    srcs = glob(
+        ["*.cpp"],
+        exclude = ["FuzzerMain.cpp"],
+    ),
     hdrs = glob([
         "*.h",
         "*.def",
     ]),
     copts = [
-        "-g",
+        "-std=c++11",
         "-O2",
-        "-fno-omit-frame-pointer",
-        "-std=c++14",
+        "-fPIC",
+    ],
+    linkopts = [
+        "-ldl",
+        "-lpthread",
     ],
     linkstatic = True,
-    visibility = ["//visibility:public"],
     alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "fuzzer_only.so",
+    linkshared = True,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":fuzzer_no_main",
+    ],
 )
 
 cc_binary(
@@ -23,7 +36,7 @@ cc_binary(
     linkshared = True,
     visibility = ["//visibility:public"],
     deps = [
-        ":atheris_libfuzzer",
+        ":fuzzer_no_main",
         "@rules_fuzzing_sanitizer_libs//:asan",
     ],
 )

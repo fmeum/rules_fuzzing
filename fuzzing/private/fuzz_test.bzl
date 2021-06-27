@@ -21,9 +21,8 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("//fuzzing/private:common.bzl", "fuzzing_corpus", "fuzzing_dictionary", "fuzzing_launcher")
 load("//fuzzing/private:binary.bzl", "fuzzing_binary", "fuzzing_binary_uninstrumented")
 load("//fuzzing/private:java_utils.bzl", "determine_primary_class", "jazzer_fuzz_binary")
-load("//fuzzing/private:py_utils.bzl", "atheris_fuzz_binary")
+load("//fuzzing/private:py_utils.bzl", "atheris_fuzz_binary", "atheris_fuzz_target_wrapper")
 load("//fuzzing/private:regression.bzl", "fuzzing_regression_test")
-load("//fuzzing/private:util.bzl", "generate_file")
 load("//fuzzing/private/oss_fuzz:package.bzl", "oss_fuzz_package")
 
 def fuzzing_decoration(
@@ -308,7 +307,7 @@ def py_fuzz_test(
         engine = "@rules_fuzzing//fuzzing:py_engine",
         main = None,
         tags = None,
-        **binary_kwargs):
+        **library_kwargs):
     """Defines a Python fuzz test and a few associated tools and metadata.
 
     For each fuzz test `<name>`, this macro defines a number of targets. The
@@ -334,46 +333,25 @@ def py_fuzz_test(
         dicts: A list containing dictionaries.
         engine: A label pointing to the fuzzing engine to use.
         tags: Tags set on the fuzzing regression test.
-        **binary_kwargs: Keyword arguments directly forwarded to the fuzz test
-          binary rule.
+        **library_kwargs: Keyword arguments directly forwarded to the fuzz test
+          library rule.
     """
 
     # Append the '_' suffix to the raw target to dissuade users from referencing
     # this target directly. Instead, the binary should be built through the
     # instrumented configuration.
+    if main:
+        if not main.endswith(".py"):
+            fail("Explicit 'main' attribute must end with '.py': %s" % main)
+        target_module = main[:-3]
+    else:
+        target_module = name
     raw_target_name = name + "_target_"
-    wrapper_name = name + "_wrapper_"
-    wrapper_py_name = wrapper_name + ".py"
-
-    generate_file(
-        name = wrapper_name,
-        contents = """import sys
-
-import {target_module}
-
-import atheris_no_libfuzzer as atheris
-
-print(sys.path)
-atheris.Setup(sys.argv, {target_module}.TestOneInput)
-atheris.Fuzz()
-        """.format(
-            target_module = name
-        ),
-        output = wrapper_py_name,
-    )
-
-    native.py_library(
+    atheris_fuzz_target_wrapper(
         name = raw_target_name,
-        **binary_kwargs
-    )
-
-    native.py_binary(
-        name = wrapper_name,
-        main = wrapper_py_name,
-        deps = [
-            raw_target_name,
-            engine,
-        ],
+        engine = engine,
+        target_module = target_module,
+        **library_kwargs
     )
 
     raw_binary_name = name + "_raw_"
@@ -388,7 +366,7 @@ atheris.Fuzz()
             "@rules_fuzzing//fuzzing/private:use_oss_fuzz": "@rules_fuzzing//fuzzing/private:oss_fuzz_jazzer_sanitizer_options.sh",
             "//conditions:default": "@rules_fuzzing//fuzzing/private:local_atheris_sanitizer_options.sh",
         }),
-        target = wrapper_name,
+        target = raw_target_name,
     )
 
     fuzzing_decoration(

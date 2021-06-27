@@ -15,7 +15,54 @@
 """Utilities and helper rules for Python fuzz tests."""
 
 load("//fuzzing/private:binary.bzl", "fuzzing_binary_transition")
-load("//fuzzing/private:util.bzl", "runfile_path")
+load("//fuzzing/private:util.bzl", "generate_file", "runfile_path")
+
+ATHERIS_FUZZ_TARGET_WRAPPER = """import sys
+import atheris.atheris_no_libfuzzer as atheris
+
+import {target_module}
+
+atheris.Setup(sys.argv, {target_module}.test_one_input)
+atheris.Fuzz()
+"""
+
+def atheris_fuzz_target_wrapper(
+        name,
+        engine,
+        target_module,
+        **library_kwargs):
+    wrapper_name = name
+    wrapper_py_name = wrapper_name + ".py"
+    wrapper_py_gen_name = wrapper_name + "_py_gen_"
+    library_name = name + "_lib_"
+
+    generate_file(
+        name = wrapper_py_gen_name,
+        contents = ATHERIS_FUZZ_TARGET_WRAPPER.format(
+            target_module = target_module,
+        ),
+        output = wrapper_py_name,
+    )
+
+    library_kwargs.setdefault("imports", []).append(".")
+    native.py_library(
+        name = library_name,
+        **library_kwargs
+    )
+
+    native.py_binary(
+        name = wrapper_name,
+        srcs = [
+            ":" + wrapper_py_gen_name,
+        ],
+        main = wrapper_py_name,
+        deps = [
+            ":" + library_name,
+            # FIXME
+            # engine,
+            "@atheris//:atheris_no_libfuzzer",
+        ],
+    )
 
 def _atheris_fuzz_binary_script(ctx):
     script = ctx.actions.declare_file(ctx.label.name)
@@ -44,7 +91,6 @@ runfiles_export_envvars
 
     script_format_part = """
 source "$(rlocation {sanitizer_options})"
-PYTHONNOUSERSITE=not_hermetic_dont_use \
 LD_PRELOAD="$(rlocation {sanitizer_with_fuzzer})" \
 exec "$(rlocation {target})" "$@"
 """
@@ -59,6 +105,7 @@ exec "$(rlocation {target})" "$@"
 
 def _atheris_fuzz_binary_impl(ctx):
     runfiles = ctx.runfiles()
+
     # Used by the wrapper script created in _atheris_fuzz_binary_script.
     runfiles = runfiles.merge(ctx.attr._bash_runfiles_library[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr.target[0][DefaultInfo].default_runfiles)

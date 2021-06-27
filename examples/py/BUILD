@@ -16,8 +16,6 @@
 # serve as regression tests. Targets that are expected to crash or hang are
 # disabled in the OSS-Fuzz integration using the "no-oss-fuzz" tag.
 
-load("@rules_cc//cc:defs.bzl", "cc_binary")
-load("@rules_python//python:defs.bzl", "py_binary")
 load("//fuzzing:py_defs.bzl", "py_fuzz_test")
 
 py_fuzz_test(
@@ -40,4 +38,9 @@ py_fuzz_test(
     deps = [
         "@atheris//:atheris_no_libfuzzer",
     ],
+)
+
+py_fuzz_test(
+    name = "fuzzing_example",
+    srcs = ["fuzzing_example.py"],
 )

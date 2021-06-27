@@ -305,6 +305,7 @@ def py_fuzz_test(
         corpus = None,
         dicts = None,
         engine = "@rules_fuzzing//fuzzing:py_engine",
+        engine_lib = "@rules_fuzzing//fuzzing:py_engine_lib",
         main = None,
         tags = None,
         use_fuzzed_data_provider = False,
@@ -350,7 +351,7 @@ def py_fuzz_test(
     raw_target_name = name + "_target_"
     atheris_fuzz_target_wrapper(
         name = raw_target_name,
-        engine = engine,
+        engine_lib = engine_lib,
         target_module = target_module,
         use_fuzzed_data_provider = use_fuzzed_data_provider,
         **library_kwargs

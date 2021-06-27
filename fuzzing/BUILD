@@ -32,14 +32,21 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
+label_flag(
+    name = "py_engine_lib",
+    build_setting_default = "@atheris//:atheris_no_libfuzzer",
+    visibility = ["//visibility:public"],
+)
+
 string_flag(
     name = "cc_engine_instrumentation",
     build_setting_default = "none",
     values = [
         "none",
-        "libfuzzer",
-        "jazzer",
+        "atheris",
         "honggfuzz",
+        "jazzer",
+        "libfuzzer",
         "oss-fuzz",
     ],
     visibility = ["//visibility:public"],

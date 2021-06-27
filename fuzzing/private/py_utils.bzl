@@ -18,7 +18,7 @@ load("//fuzzing/private:binary.bzl", "fuzzing_binary_transition")
 load("//fuzzing/private:util.bzl", "generate_file", "runfile_path")
 
 ATHERIS_FUZZ_TARGET_WRAPPER = """import sys
-import atheris.atheris_no_libfuzzer as atheris
+import atheris_no_libfuzzer as atheris
 
 import {target_module}
 
@@ -41,7 +41,7 @@ atheris.Fuzz()
 
 def atheris_fuzz_target_wrapper(
         name,
-        engine,
+        engine_lib,
         target_module,
         use_fuzzed_data_provider,
         **library_kwargs):
@@ -77,9 +77,7 @@ def atheris_fuzz_target_wrapper(
         main = wrapper_py_name,
         deps = [
             ":" + library_name,
-            # FIXME
-            # engine,
-            "@atheris//:atheris_no_libfuzzer",
+            engine_lib,
         ],
     )
 

@@ -26,15 +26,34 @@ atheris.Setup(sys.argv, {target_module}.test_one_input)
 atheris.Fuzz()
 """
 
+ATHERIS_FUZZ_TARGET_WRAPPER_WITH_PROVIDER = """import sys
+import atheris.atheris_no_libfuzzer as atheris
+
+import {target_module}
+
+def test_one_input_fdp(data):
+    fdp = atheris.FuzzedDataProvider(data)
+    {target_module}.test_one_input(fdp)
+
+atheris.Setup(sys.argv, test_one_input_fdp)
+atheris.Fuzz()
+"""
+
 def atheris_fuzz_target_wrapper(
         name,
         engine,
         target_module,
+        use_fuzzed_data_provider,
         **library_kwargs):
     wrapper_name = name
     wrapper_py_name = wrapper_name + ".py"
     wrapper_py_gen_name = wrapper_name + "_py_gen_"
     library_name = name + "_lib_"
+
+    if use_fuzzed_data_provider:
+        wrapper_template = ATHERIS_FUZZ_TARGET_WRAPPER_WITH_PROVIDER
+    else:
+        wrapper_template = ATHERIS_FUZZ_TARGET_WRAPPER
 
     generate_file(
         name = wrapper_py_gen_name,

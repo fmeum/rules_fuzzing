@@ -21,5 +21,5 @@ def CodeBeingFuzzed(number):
     raise RuntimeError('Number was seventeen!')
 
 
-def TestOneInput(fdp):
+def test_one_input(fdp):
   CodeBeingFuzzed(fdp.ConsumeInt(4))

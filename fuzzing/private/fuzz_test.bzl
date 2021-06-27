@@ -307,6 +307,7 @@ def py_fuzz_test(
         engine = "@rules_fuzzing//fuzzing:py_engine",
         main = None,
         tags = None,
+        use_fuzzed_data_provider = False,
         **library_kwargs):
     """Defines a Python fuzz test and a few associated tools and metadata.
 
@@ -351,6 +352,7 @@ def py_fuzz_test(
         name = raw_target_name,
         engine = engine,
         target_module = target_module,
+        use_fuzzed_data_provider = use_fuzzed_data_provider,
         **library_kwargs
     )
 

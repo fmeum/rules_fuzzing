@@ -19,28 +19,12 @@
 load("//fuzzing:py_defs.bzl", "py_fuzz_test")
 
 py_fuzz_test(
-    name = "atheris_driver",
-    srcs = [
-        "atheris_driver.py",
-        "fuzzing_example.py",
-    ],
-    deps = [
-        "@atheris//:atheris_no_libfuzzer",
-    ],
-)
-
-py_fuzz_test(
-    name = "atheris_provider_driver",
-    srcs = [
-        "atheris_provider_driver.py",
-        "fuzzed_data_provider_example.py",
-    ],
-    deps = [
-        "@atheris//:atheris_no_libfuzzer",
-    ],
-)
-
-py_fuzz_test(
     name = "fuzzing_example",
     srcs = ["fuzzing_example.py"],
+)
+
+py_fuzz_test(
+    name = "fuzzed_data_provider_example",
+    srcs = ["fuzzed_data_provider_example.py"],
+    use_fuzzed_data_provider = True,
 )

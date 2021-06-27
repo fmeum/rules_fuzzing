@@ -17,16 +17,6 @@ filegroup(
 )
 
 pybind_extension(
-    name = "atheris",
-    srcs = [
-        ":atheris_srcs",
-    ],
-    deps = [
-        "@atheris_libfuzzer//:fuzzer_no_main",
-    ],
-)
-
-pybind_extension(
     name = "atheris_no_libfuzzer",
     srcs = [
         ":atheris_srcs",
@@ -37,15 +27,10 @@ pybind_extension(
 )
 
 py_library(
-    name = "atheris",
-    data = [":atheris.so"],
-    imports = ["."],
-    visibility = ["//visibility:public"],
-)
-
-py_library(
     name = "atheris_no_libfuzzer",
-    data = [":atheris_no_libfuzzer.so"],
+    data = [
+        ":atheris_no_libfuzzer.so",
+    ],
     imports = ["."],
     visibility = ["//visibility:public"],
 )

@@ -12,21 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Simple fuzz targets that demonstrate the Bazel extension functionality and
-# serve as regression tests. Targets that are expected to crash or hang are
-# disabled in the OSS-Fuzz integration using the "no-oss-fuzz" tag.
-
-load("//fuzzing:py_defs.bzl", "py_fuzz_test")
-
-py_fuzz_test(
-    name = "empty_fuzz_test",
-    srcs = ["empty_fuzz_test.py"],
-)
-
-py_fuzz_test(
-    name = "fuzz_test",
-    srcs = ["fuzz_test.py"],
-    tags = [
-        "no-oss-fuzz",
-    ],
-)
+def test_one_input(data):
+    pass

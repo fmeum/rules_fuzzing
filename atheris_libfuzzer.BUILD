@@ -19,7 +19,6 @@ cc_library(
     ],
     linkstatic = True,
     alwayslink = True,
-    visibility = ["//visibility:public"],
 )
 
 cc_binary(

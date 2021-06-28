@@ -80,7 +80,7 @@ java_fuzzing_engine(
 py_fuzzing_engine(
     name = "atheris",
     display_name = "Atheris",
-    launcher = "libfuzzer_launcher.sh",
+    launcher = "atheris_launcher.sh",
     library = "@atheris//:atheris_no_libfuzzer",
     visibility = ["//visibility:public"],
 )

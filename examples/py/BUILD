@@ -16,6 +16,7 @@
 # serve as regression tests. Targets that are expected to crash or hang are
 # disabled in the OSS-Fuzz integration using the "no-oss-fuzz" tag.
 
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("//fuzzing:py_defs.bzl", "py_fuzz_test")
 
 py_fuzz_test(
@@ -29,4 +30,23 @@ py_fuzz_test(
     tags = [
         "no-oss-fuzz",
     ],
+)
+
+py_fuzz_test(
+    name = "native_fuzz_test",
+    srcs = ["native_fuzz_test.py"],
+    data = [
+        ":native",
+    ],
+    tags = [
+        "no-oss-fuzz",
+    ],
+)
+
+cc_binary(
+    name = "native",
+    srcs = [
+        "native.c",
+    ],
+    linkshared = 1,
 )

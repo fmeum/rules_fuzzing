@@ -16,6 +16,7 @@
 # serve as regression tests. Targets that are expected to crash or hang are
 # disabled in the OSS-Fuzz integration using the "no-oss-fuzz" tag.
 
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("//fuzzing:py_defs.bzl", "py_fuzz_test")
 
@@ -43,10 +44,35 @@ py_fuzz_test(
     ],
 )
 
+py_fuzz_test(
+    name = "native_runfile_fuzz_test",
+    srcs = ["native_runfile_fuzz_test.py"],
+    data = [
+        "corpus_0.txt",
+        ":native_runfile.so",
+    ],
+    deps = [
+        "@rules_python//python/runfiles",
+    ],
+)
+
 cc_binary(
     name = "native",
     srcs = [
         "native.c",
     ],
     linkshared = 1,
+)
+
+pybind_extension(
+    name = "native_runfile",
+    srcs = [
+        "native_runfile.cpp",
+    ],
+    data = [
+        "corpus_1.txt",
+    ],
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
 )

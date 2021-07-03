@@ -52,6 +52,9 @@ def _fuzzing_binary_transition_impl(settings, attr):
         cxxopts = settings["//command_line_option:cxxopt"],
         linkopts = settings["//command_line_option:linkopt"],
     )
+    # Mark the beginning of the flags added by this transition so that they can
+    # be removed by another transition.
+    opts = instrum_opts.mark_start(opts)
 
     is_fuzzing_build_mode = settings["@rules_fuzzing//fuzzing:cc_fuzzing_build_mode"]
     if is_fuzzing_build_mode:
@@ -69,6 +72,8 @@ def _fuzzing_binary_transition_impl(settings, attr):
     else:
         fail("unsupported sanitizer '%s'" % sanitizer_config)
 
+    opts = instrum_opts.mark_end(opts)
+
     return {
         "//command_line_option:copt": opts.copts,
         "//command_line_option:linkopt": opts.linkopts,
@@ -85,6 +90,40 @@ fuzzing_binary_transition = transition(
         "@rules_fuzzing//fuzzing:cc_engine_instrumentation",
         "@rules_fuzzing//fuzzing:cc_engine_sanitizer",
         "@rules_fuzzing//fuzzing:cc_fuzzing_build_mode",
+        "//command_line_option:copt",
+        "//command_line_option:conlyopt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:linkopt",
+    ],
+    outputs = [
+        "//command_line_option:copt",
+        "//command_line_option:conlyopt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:linkopt",
+        "//command_line_option:dynamic_mode",
+    ],
+)
+
+def _undo_fuzzing_binary_transition_impl(settings, attr):
+    opts = instrum_opts.make(
+        copts = settings["//command_line_option:copt"],
+        conlyopts = settings["//command_line_option:conlyopt"],
+        cxxopts = settings["//command_line_option:cxxopt"],
+        linkopts = settings["//command_line_option:linkopt"],
+    )
+    opts = instrum_opts.drop_marked(opts)
+
+    return {
+        "//command_line_option:copt": opts.copts,
+        "//command_line_option:linkopt": opts.linkopts,
+        "//command_line_option:conlyopt": opts.conlyopts,
+        "//command_line_option:cxxopt": opts.cxxopts,
+        "//command_line_option:dynamic_mode": "default",
+    }
+
+_undo_fuzzing_binary_transition = transition(
+    implementation = _undo_fuzzing_binary_transition_impl,
+    inputs = [
         "//command_line_option:copt",
         "//command_line_option:conlyopt",
         "//command_line_option:cxxopt",
@@ -209,4 +248,26 @@ be incorporated in the target configuration (e.g., on the command line or the
     }),
     executable = True,
     provides = [FuzzingBinaryInfo],
+)
+
+def _uninstrumented_cc_library_impl(ctx):
+    library = ctx.attr.library[0]
+    return [
+        library[DefaultInfo],
+        library[CcInfo],
+    ]
+
+uninstrumented_cc_library = rule(
+    implementation = _uninstrumented_cc_library_impl,
+    attrs = {
+        "library": attr.label(
+            cfg = _undo_fuzzing_binary_transition,
+            mandatory = True,
+            providers = [CcInfo],
+        ),
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
+    },
+    provides = [CcInfo],
 )

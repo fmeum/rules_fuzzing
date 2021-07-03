@@ -65,9 +65,49 @@ def _merge_opts(left_opts, right_opts):
         linkopts = left_opts.linkopts + right_opts.linkopts,
     )
 
+_INSTRUM_START_MARKER = "-DBAZEL_RULES_FUZZING_INSTRUM_START"
+_INSTRUM_END_MARKER = "-DBAZEL_RULES_FUZZING_INSTRUM_END"
+
+def _add_marker(opts, marker):
+    return _make_opts(
+        copts = opts.copts + [marker],
+        conlyopts = opts.conlyopts + [marker],
+        cxxopts = opts.cxxopts + [marker],
+        linkopts = opts.linkopts + [marker],
+    )
+
+def _mark_start(opts):
+    return _add_marker(opts, _INSTRUM_START_MARKER)
+
+def _mark_end(opts):
+    return _add_marker(opts, _INSTRUM_END_MARKER)
+
+def _drop_opts_between_markers(list):
+    new_list = []
+    take = True
+    for opt in list:
+        if opt == _INSTRUM_START_MARKER:
+            take = False
+        elif opt == _INSTRUM_END_MARKER:
+            take = True
+        elif take:
+            new_list.append(opt)
+    return new_list
+
+def _drop_marked(opts):
+    return _make_opts(
+        copts = _drop_opts_between_markers(opts.copts),
+        conlyopts = _drop_opts_between_markers(opts.conlyopts),
+        cxxopts = _drop_opts_between_markers(opts.cxxopts),
+        linkopts = _drop_opts_between_markers(opts.linkopts),
+    )
+
 instrum_opts = struct(
     make = _make_opts,
     merge = _merge_opts,
+    mark_start = _mark_start,
+    mark_end = _mark_end,
+    drop_marked = _drop_marked,
 )
 
 instrum_defaults = struct(

@@ -32,7 +32,7 @@ load(
 # Fuzz test binary instrumentation configurations.
 instrum_configs = {
     "none": instrum_opts.make(),
-    "atheris": instrum_defaults.libfuzzer,
+    "atheris": instrum_defaults.atheris,
     "honggfuzz": instrum_defaults.honggfuzz,
     "jazzer": instrum_defaults.libfuzzer,
     "libfuzzer": instrum_defaults.libfuzzer,

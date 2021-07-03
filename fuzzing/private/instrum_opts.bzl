@@ -77,6 +77,12 @@ instrum_defaults = struct(
     fuzzing_build = _make_opts(
         copts = ["-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"],
     ),
+    atheris = _make_opts(
+        copts = [
+            "-fsanitize=fuzzer-no-link",
+            "-fno-sanitize=leak",
+        ],
+    ),
     libfuzzer = _make_opts(
         copts = ["-fsanitize=fuzzer-no-link"],
     ),

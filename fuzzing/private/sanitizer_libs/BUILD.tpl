@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +13,4 @@
 # limitations under the License.
 
 load("@rules_cc//cc:defs.bzl", "cc_import")
-
-cc_import(
-    name = "asan",
-    static_library = "asan.a",
-    visibility = [
-        "@atheris_libfuzzer//:__pkg__",
-    ],
-    alwayslink = True,
-)
+%{sanitizer_lib_targets}

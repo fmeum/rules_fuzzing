@@ -27,6 +27,7 @@ cc_library(
     name = "oss_fuzz_stub",
     srcs = [%{stub_srcs}],
     linkopts = [%{stub_linkopts}],
+    deps = [%{stub_deps}],
 )
 
 exports_files([

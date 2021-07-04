@@ -32,7 +32,7 @@ def rules_fuzzing_dependencies(
       jazzer: Include Jazzer repository. Instantiating all Jazzer dependencies
         additionally requires invoking jazzer_dependencies() in
         @jazzer//:repositories.bzl and jazzer_init() in @jazzer//:init.bzl.
-      atheris: Include Atheris repository.
+      atheris: Include Atheris dependencies.
     """
 
     maybe(
@@ -65,6 +65,11 @@ def rules_fuzzing_dependencies(
         maybe(
             oss_fuzz_repository,
             name = "rules_fuzzing_oss_fuzz",
+        )
+
+        maybe(
+            sanitizer_libs_repository,
+            name = "rules_fuzzing_sanitizer_libs",
         )
 
     if honggfuzz:

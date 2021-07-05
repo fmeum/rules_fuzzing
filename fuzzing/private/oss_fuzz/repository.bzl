@@ -125,6 +125,23 @@ def _oss_fuzz_repository(repository_ctx):
         "echo 'The OSS-Fuzz engine is not meant to be executed.'; exit 1",
     )
 
+    repository_ctx.symlink(
+        "/usr/local/bin/python3.8",
+        "python3/bin/python3",
+    )
+    repository_ctx.symlink(
+        "/usr/local/lib/libpython3.8.so",
+        "python3/lib/libpython3.8.so",
+    )
+    repository_ctx.symlink(
+        "/usr/local/lib/libpython3.8.so.1.0",
+        "python3/lib/libpython3.8.so.1.0",
+    )
+    repository_ctx.symlink(
+        "/usr/local/lib/python3.8",
+        "python3/lib/python3.8",
+    )
+
 oss_fuzz_repository = repository_rule(
     implementation = _oss_fuzz_repository,
     environ = [

@@ -104,9 +104,9 @@ def rules_fuzzing_dependencies(
         maybe(
             http_archive,
             name = "pybind11_bazel",
-            sha256 = "8f546c03bdd55d0e88cb491ddfbabe5aeb087f87de2fbf441391d70483affe39",
-            strip_prefix = "pybind11_bazel-26973c0ff320cb4b39e45bc3e4297b82bc3a6c09",
-            url = "https://github.com/pybind/pybind11_bazel/archive/26973c0ff320cb4b39e45bc3e4297b82bc3a6c09.tar.gz",
+            sha256 = "14621a9e7b8d7121460fcfd4ec90905be21fb59bf0d47c1aa5919b681cde629d",
+            strip_prefix = "pybind11_bazel-938e4c46b8d66967cda41a1d2513f69d37faa2b3",
+            url = "https://github.com/pybind/pybind11_bazel/archive/938e4c46b8d66967cda41a1d2513f69d37faa2b3.tar.gz",
         )
 
         maybe(

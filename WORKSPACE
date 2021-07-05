@@ -64,7 +64,11 @@ load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
 stardoc_repositories()
 
 load("@pybind11_bazel//:python_configure.bzl", "python_configure")
-python_configure(name = "local_config_python")
+python_configure(
+    name = "local_config_python",
+    python_version = "3",
+    python_interpreter_target = "@rules_fuzzing_oss_fuzz//:python3/bin/python3",
+)
 
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 
@@ -72,4 +76,4 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 # https://bazelbuild.github.io/rules_foreign_cc/0.4.0/flatten.html#rules_foreign_cc_dependencies
 rules_foreign_cc_dependencies()
 
-# register_toolchains("//:python_toolchain")
+register_toolchains("@rules_fuzzing_oss_fuzz//:python_toolchain")

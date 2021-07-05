@@ -14,6 +14,7 @@
 
 load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzzing_engine")
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_python//python:defs.bzl", "py_runtime", "py_runtime_pair")
 
 cc_fuzzing_engine(
     name = "oss_fuzz_engine",
@@ -28,6 +29,31 @@ cc_library(
     srcs = [%{stub_srcs}],
     linkopts = [%{stub_linkopts}],
     deps = [%{stub_deps}],
+)
+
+filegroup(
+    name = "python3_files",
+    srcs = glob([
+        "python3/**",
+    ]),
+)
+
+py_runtime(
+    name = "python3_runtime",
+    files = [":python3_files"],
+    interpreter = "python3/bin/python3",
+    python_version = "PY3",
+)
+
+py_runtime_pair(
+    name = "python_runtime_pair",
+    py3_runtime = ":python3_runtime",
+)
+
+toolchain(
+    name = "python_toolchain",
+    toolchain = ":python_runtime_pair",
+    toolchain_type = "@bazel_tools//tools/python:toolchain_type",
 )
 
 exports_files([

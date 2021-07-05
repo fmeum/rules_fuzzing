@@ -35,6 +35,9 @@ filegroup(
     name = "python3_files",
     srcs = glob([
         "python3/**",
+    ], exclude = [
+        "python3/**/launcher manifest.xml",
+        "python3/lib/python3.8/site-packages/setuptools/script (dev).tmpl",
     ]),
 )
 

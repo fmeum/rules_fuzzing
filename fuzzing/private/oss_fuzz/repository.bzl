@@ -74,6 +74,7 @@ _JAZZER_BINARIES = [
     "jazzer_agent_deploy.jar",
     "jazzer_driver",
     "jazzer_driver_with_sanitizer",
+    "sanitizer_with_fuzzer.so",
 ]
 
 def _export_jazzer(repository_ctx, out_path):

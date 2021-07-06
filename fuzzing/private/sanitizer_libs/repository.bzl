@@ -107,5 +107,4 @@ sanitizer_libs_repository = repository_rule(
     implementation = _sanitizer_libs_repository,
     environ = ["CC"],
     configure = True,
-    local = True,
 )

@@ -36,8 +36,10 @@ filegroup(
     srcs = glob([
         "python3/**",
     ], exclude = [
-        "python3/**/launcher manifest.xml",
-        "python3/lib/python3.8/site-packages/setuptools/script (dev).tmpl",
+        # Bazel cannot handle runfiles with spaces in their paths. Luckily these
+        # files belong to setuptools and are thus not relevant for Python
+        # fuzzing.
+        "python3/**/* *",
     ]),
 )
 
@@ -60,5 +62,5 @@ toolchain(
 )
 
 exports_files([
-    "instrum.bzl", %{exported_files}
+    "instrum.bzl", "python3/bin/python3", %{exported_files}
 ])

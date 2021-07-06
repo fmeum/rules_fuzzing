@@ -128,7 +128,7 @@ def _oss_fuzz_repository(repository_ctx):
 
     repository_ctx.symlink(
         "/usr/local/bin/python3.8",
-        "python3/bin/python3",
+        "python3/bin/python3_real",
     )
     repository_ctx.symlink(
         "/usr/local/lib/libpython3.8.so",
@@ -141,6 +141,10 @@ def _oss_fuzz_repository(repository_ctx):
     repository_ctx.symlink(
         "/usr/local/lib/python3.8",
         "python3/lib/python3.8",
+    )
+    repository_ctx.symlink(
+        repository_ctx.path(Label("@rules_fuzzing//fuzzing/private/oss_fuzz:python3/bin/python3")),
+        "python3/bin/python3",
     )
 
 oss_fuzz_repository = repository_rule(

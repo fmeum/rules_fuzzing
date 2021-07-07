@@ -19,7 +19,11 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//fuzzing/private/oss_fuzz:repository.bzl", "oss_fuzz_repository")
 load("//fuzzing/private/sanitizer_libs:repository.bzl", "sanitizer_libs_repository")
 
-def rules_fuzzing_dependencies(oss_fuzz = True, honggfuzz = True, jazzer = False):
+def rules_fuzzing_dependencies(
+        oss_fuzz = True,
+        honggfuzz = True,
+        jazzer = False,
+        atheris = False):
     """Instantiates the dependencies of the fuzzing rules.
 
     Args:
@@ -28,6 +32,7 @@ def rules_fuzzing_dependencies(oss_fuzz = True, honggfuzz = True, jazzer = False
       jazzer: Include Jazzer repository. Instantiating all Jazzer dependencies
         additionally requires invoking jazzer_dependencies() in
         @jazzer//:repositories.bzl and jazzer_init() in @jazzer//:init.bzl.
+      atheris: Include Atheris dependencies.
     """
 
     maybe(
@@ -84,4 +89,45 @@ def rules_fuzzing_dependencies(oss_fuzz = True, honggfuzz = True, jazzer = False
             sha256 = "c8d187663365f625bb00d6b531ede17898d87bbaed59de16a85590117cff0fa4",
             strip_prefix = "jazzer-1b11bd6515a65f02a1cbe5aaa183180faa92a55b",
             url = "https://github.com/CodeIntelligenceTesting/jazzer/archive/1b11bd6515a65f02a1cbe5aaa183180faa92a55b.zip",
+        )
+
+    if atheris:
+        maybe(
+            http_archive,
+            name = "atheris",
+            build_file = "@rules_fuzzing//:atheris.BUILD",
+            sha256 = "5b2fd9d32cb44877a2e3eebd2b97e76f4a9c6a6c27ea37752a4a33be732d8d5d",
+            strip_prefix = "atheris-9169b8d1dd0a6ff66a7e87fc2f24cc87ff6c65df",
+            url = "https://github.com/google/atheris/archive/9169b8d1dd0a6ff66a7e87fc2f24cc87ff6c65df.tar.gz",
+        )
+
+        maybe(
+            http_archive,
+            name = "libfuzzer",
+            build_file = "@rules_fuzzing//:libfuzzer.BUILD",
+            sha256 = "85a8cd0a62413eaa0457d8d02f8edac38c4dc0c96c00b09dc550260c23268434",
+            strip_prefix = "compiler-rt-12.0.0.src/lib/fuzzer",
+            url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/compiler-rt-12.0.0.src.tar.xz",
+        )
+
+        maybe(
+            http_archive,
+            name = "pybind11",
+            build_file = "@pybind11_bazel//:pybind11.BUILD",
+            sha256 = "8ff2fff22df038f5cd02cea8af56622bc67f5b64534f1b83b9f133b8366acff2",
+            strip_prefix = "pybind11-2.6.2",
+            url = "https://github.com/pybind/pybind11/archive/v2.6.2.tar.gz",
+        )
+
+        maybe(
+            http_archive,
+            name = "pybind11_bazel",
+            sha256 = "8f546c03bdd55d0e88cb491ddfbabe5aeb087f87de2fbf441391d70483affe39",
+            strip_prefix = "pybind11_bazel-26973c0ff320cb4b39e45bc3e4297b82bc3a6c09",
+            url = "https://github.com/pybind/pybind11_bazel/archive/26973c0ff320cb4b39e45bc3e4297b82bc3a6c09.tar.gz",
+        )
+
+        maybe(
+            sanitizer_libs_repository,
+            name = "rules_fuzzing_sanitizer_libs",
         )

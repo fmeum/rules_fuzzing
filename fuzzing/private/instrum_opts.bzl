@@ -65,9 +65,83 @@ def _merge_opts(left_opts, right_opts):
         linkopts = left_opts.linkopts + right_opts.linkopts,
     )
 
+# These no-op defines are used as delimiters that enclose the command-line
+# options added for fuzzing instrumentation, which makes it possible to cleanly
+# remove these options with a follow-up transition.
+_INSTRUM_START_MARKER = "-D_BAZEL_RULES_FUZZING_INSTRUM_START_"
+_INSTRUM_END_MARKER = "-D_BAZEL_RULES_FUZZING_INSTRUM_END_"
+
+def _add_marker(opts, marker):
+    return _make_opts(
+        copts = opts.copts + [marker],
+        conlyopts = opts.conlyopts + [marker],
+        cxxopts = opts.cxxopts + [marker],
+        linkopts = opts.linkopts + [marker],
+    )
+
+def _mark_start(opts):
+    """Marks the start of instrumentation command-line options.
+
+    To be used in conjunction with `mark_end` to later allow `drop_marked` to
+    drop all options added between the calls to `mark_start` and `mark_end`.
+
+    Args:
+      opts: A struct with command-line options to which no fuzzing-related
+        instrumentation options have been added yet.
+    Return:
+      A new struct with the same options as in `opts` and an additional start
+      marker.
+    """
+    return _add_marker(opts, _INSTRUM_START_MARKER)
+
+def _mark_end(opts):
+    """Marks the end of instrumentation command-line options.
+
+    To be used in conjunction with `mark_start` to later allow `drop_marked` to
+    drop all options added between the calls to `mark_start` and `mark_end`.
+
+    Args:
+      opts: A struct with instrumentation options.
+    Return:
+      A new struct with the same options as in `opts` and an additional end
+      marker.
+    """
+    return _add_marker(opts, _INSTRUM_END_MARKER)
+
+def _drop_opts_between_markers(list):
+    new_list = []
+    take = True
+    for opt in list:
+        if opt == _INSTRUM_START_MARKER:
+            take = False
+        elif opt == _INSTRUM_END_MARKER:
+            take = True
+        elif take:
+            new_list.append(opt)
+    return new_list
+
+def _drop_marked(opts):
+    """Removes options added between calls to `mark_start` and `mark_end`.
+
+    Args:
+      opts: A struct with instrumentation options.
+    Return:
+      A new struct with all options removed that were added between calls to
+      `mark_start` and `mark_end`.
+    """
+    return _make_opts(
+        copts = _drop_opts_between_markers(opts.copts),
+        conlyopts = _drop_opts_between_markers(opts.conlyopts),
+        cxxopts = _drop_opts_between_markers(opts.cxxopts),
+        linkopts = _drop_opts_between_markers(opts.linkopts),
+    )
+
 instrum_opts = struct(
     make = _make_opts,
     merge = _merge_opts,
+    mark_start = _mark_start,
+    mark_end = _mark_end,
+    drop_marked = _drop_marked,
 )
 
 instrum_defaults = struct(

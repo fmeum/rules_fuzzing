@@ -17,6 +17,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//fuzzing/private/oss_fuzz:repository.bzl", "oss_fuzz_repository")
+load("//fuzzing/private/sanitizer_libs:repository.bzl", "sanitizer_libs_repository")
 
 def rules_fuzzing_dependencies(oss_fuzz = True, honggfuzz = True, jazzer = False):
     """Instantiates the dependencies of the fuzzing rules.
@@ -59,6 +60,11 @@ def rules_fuzzing_dependencies(oss_fuzz = True, honggfuzz = True, jazzer = False
         maybe(
             oss_fuzz_repository,
             name = "rules_fuzzing_oss_fuzz",
+        )
+
+        maybe(
+            sanitizer_libs_repository,
+            name = "rules_fuzzing_sanitizer_libs",
         )
 
     if honggfuzz:

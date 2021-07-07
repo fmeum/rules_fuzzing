@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,25 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzzing_engine")
-load("@rules_cc//cc:defs.bzl", "cc_library")
-
-cc_fuzzing_engine(
-    name = "oss_fuzz_engine",
-    display_name = "OSS-Fuzz",
-    launcher = "oss_fuzz_launcher.sh",
-    library = ":oss_fuzz_stub",
-    visibility = ["//visibility:public"],
-)
-
-cc_library(
-    name = "oss_fuzz_stub",
-    srcs = [%{stub_srcs}],
-    linkopts = [%{stub_linkopts}],
-    deps = [%{stub_deps}],
-)
-
-exports_files([
-    "instrum.bzl", %{exported_files}
-])

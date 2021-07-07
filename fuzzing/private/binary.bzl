@@ -53,6 +53,10 @@ def _fuzzing_binary_transition_impl(settings, attr):
         linkopts = settings["//command_line_option:linkopt"],
     )
 
+    # Mark the beginning of the flags added by this transition so that they can
+    # be removed by _no_instrumentation_transition.
+    opts = instrum_opts.mark_start(opts)
+
     is_fuzzing_build_mode = settings["@rules_fuzzing//fuzzing:cc_fuzzing_build_mode"]
     if is_fuzzing_build_mode:
         opts = instrum_opts.merge(opts, instrum_defaults.fuzzing_build)
@@ -68,6 +72,10 @@ def _fuzzing_binary_transition_impl(settings, attr):
         opts = instrum_opts.merge(opts, sanitizer_configs[sanitizer_config])
     else:
         fail("unsupported sanitizer '%s'" % sanitizer_config)
+
+    # Mark the end of the flags added by this transition so that they can be
+    # removed by _no_instrumentation_transition.
+    opts = instrum_opts.mark_end(opts)
 
     return {
         "//command_line_option:copt": opts.copts,
@@ -209,4 +217,71 @@ be incorporated in the target configuration (e.g., on the command line or the
     }),
     executable = True,
     provides = [FuzzingBinaryInfo],
+)
+
+def _no_instrumentation_transition_impl(settings, attr):
+    opts = instrum_opts.make(
+        copts = settings["//command_line_option:copt"],
+        conlyopts = settings["//command_line_option:conlyopt"],
+        cxxopts = settings["//command_line_option:cxxopt"],
+        linkopts = settings["//command_line_option:linkopt"],
+    )
+    opts = instrum_opts.drop_marked(opts)
+
+    return {
+        "//command_line_option:copt": opts.copts,
+        "//command_line_option:linkopt": opts.linkopts,
+        "//command_line_option:conlyopt": opts.conlyopts,
+        "//command_line_option:cxxopt": opts.cxxopts,
+    }
+
+_no_instrumentation_transition = transition(
+    implementation = _no_instrumentation_transition_impl,
+    inputs = [
+        "//command_line_option:copt",
+        "//command_line_option:conlyopt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:linkopt",
+    ],
+    outputs = [
+        "//command_line_option:copt",
+        "//command_line_option:conlyopt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:linkopt",
+    ],
+)
+
+def _cc_wrapper_no_instrumentation_impl(ctx):
+    original = ctx.attr.original[0]
+    return [
+        original[DefaultInfo],
+        original[CcInfo],
+    ]
+
+cc_wrapper_no_instrumentation = rule(
+    implementation = _cc_wrapper_no_instrumentation_impl,
+    doc = """
+Prevents fuzzing instrumentation from being applied to a `cc_*` target.
+
+This rule can be used to wrap a `cc_*` target so that neither it nor its
+dependencies are instrumented for fuzzing. It forwards the `CcInfo` provider of
+the original target and can thus be used everywhere where a `cc_*` target is
+expected.
+
+Use this for libraries that are part of a fuzzer and may be depended on by fuzz
+tests. Without this rule, these libraries may accidentally pick up fuzzing
+instrumentation, which hurts performance.
+""",
+    attrs = {
+        "original": attr.label(
+            doc = "The original `cc_*` target, e.g. a `cc_library`.",
+            cfg = _no_instrumentation_transition,
+            mandatory = True,
+            providers = [CcInfo],
+        ),
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
+    },
+    provides = [CcInfo],
 )

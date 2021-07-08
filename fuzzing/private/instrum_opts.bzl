@@ -154,6 +154,12 @@ instrum_defaults = struct(
     libfuzzer = _make_opts(
         copts = ["-fsanitize=fuzzer-no-link"],
     ),
+    atheris = _make_opts(
+        copts = [
+            "-fsanitize=fuzzer-no-link",
+            "-fno-sanitize=leak",
+        ],
+    ),
     # Reflects the set of options at
     # https://github.com/google/honggfuzz/blob/master/hfuzz_cc/hfuzz-cc.c
     honggfuzz = _make_opts(

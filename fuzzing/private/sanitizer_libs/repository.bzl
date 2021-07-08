@@ -83,6 +83,7 @@ def _cc_import_sanitizer_lib(name):
     )
 
 _SANITIZER_LIBS = [
+    "asan",
     "ubsan_standalone_cxx",
 ]
 

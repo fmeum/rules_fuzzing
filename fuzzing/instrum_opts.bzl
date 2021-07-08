@@ -34,6 +34,7 @@ instrum_configs = {
     "none": instrum_opts.make(),
     "libfuzzer": instrum_defaults.libfuzzer,
     "jazzer": instrum_defaults.libfuzzer,
+    "atheris": instrum_defaults.atheris,
     "honggfuzz": instrum_defaults.honggfuzz,
     "oss-fuzz": oss_fuzz_opts,
 }

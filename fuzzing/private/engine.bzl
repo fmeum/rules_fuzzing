@@ -130,3 +130,40 @@ Specifies a fuzzing engine that can be used to run Java fuzz targets.
     },
     provides = [FuzzingEngineInfo, JavaInfo],
 )
+
+def _py_fuzzing_engine_impl(ctx):
+    return [
+        _make_fuzzing_engine_info(ctx),
+    ]
+
+# py_fuzzing_engine targets do not expose their corresponding fuzzer library
+# directly as PyInfo does not contain information on native extensions and the
+# relevant PyCcLinkParamsProvider provider is not accessible from Starlark and
+# thus cannot be forwarded.
+py_fuzzing_engine = rule(
+    implementation = _py_fuzzing_engine_impl,
+    doc = """
+Specifies a fuzzing engine that can be used to run Python fuzz targets.
+""",
+    attrs = {
+        "display_name": attr.string(
+            doc = "The name of the fuzzing engine, as it should be rendered " +
+                  "in human-readable output.",
+            mandatory = True,
+        ),
+        "launcher": attr.label(
+            doc = "A shell script that knows how to launch the fuzzing " +
+                  "executable based on configuration specified in the environment.",
+            mandatory = True,
+            allow_single_file = True,
+        ),
+        "launcher_data": attr.label_keyed_string_dict(
+            doc = "A dict mapping additional runtime dependencies needed by " +
+                  "the fuzzing engine to environment variables that will be " +
+                  "available inside the launcher, holding the runtime path " +
+                  "to the dependency.",
+            allow_files = True,
+        ),
+    },
+    provides = [FuzzingEngineInfo],
+)

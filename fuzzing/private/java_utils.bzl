@@ -15,7 +15,7 @@
 """Utilities and helper rules for Java fuzz tests."""
 
 load("//fuzzing/private:binary.bzl", "fuzzing_binary_transition")
-load("//fuzzing/private:util.bzl", "runfile_path")
+load("//fuzzing/private:util.bzl", "FUZZER_RUNNER_SCRIPT_PROLOGUE", "runfile_path")
 
 # A Starlark reimplementation of a part of Bazel's JavaCommon#determinePrimaryClass.
 def determine_primary_class(srcs, name):
@@ -87,26 +87,7 @@ def _jazzer_fuzz_binary_script(ctx, native_libs, driver):
     # The script is split into two parts: The first is emitted as-is, the second
     # is a template that is passed to format(). Without the split, curly braces
     # in the first part would need to be escaped.
-    script_literal_part = """#!/bin/bash
-# LLVMFuzzerTestOneInput - OSS-Fuzz needs this string literal to appear
-# somewhere in the script so it is recognized as a fuzz target.
-
-# Bazel-provided code snippet that should be copy-pasted as is at use sites.
-# Taken from @bazel_tools//tools/bash/runfiles.
-# --- begin runfiles.bash initialization v2 ---
-# Copy-pasted from the Bazel Bash runfiles library v2.
-set -uo pipefail; f=bazel_tools/tools/bash/runfiles/runfiles.bash
-source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
-source "$(grep -sm1 "^$f " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -f2- -d' ')" 2>/dev/null || \
-source "$0.runfiles/$f" 2>/dev/null || \
-source "$(grep -sm1 "^$f " "$0.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
-source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
-{ echo>&2 "ERROR: cannot find $f"; exit 1; }; f=; set -e
-# --- end runfiles.bash initialization v2 ---
-
-# Export the env variables required for subprocesses to find their runfiles.
-runfiles_export_envvars
-
+    script_literal_part = FUZZER_RUNNER_SCRIPT_PROLOGUE + """
 # Determine the path to load libjvm.so from, either relative to the location of
 # the java binary or to $JAVA_HOME, if set. On OSS-Fuzz, the path is provided in
 # JVM_LD_LIBRARY_PATH.

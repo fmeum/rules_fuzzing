@@ -14,6 +14,7 @@
 
 load("//fuzzing:cc_defs.bzl", "cc_fuzzing_engine")
 load("//fuzzing:java_defs.bzl", "java_fuzzing_engine")
+load("//fuzzing:py_defs.bzl", "py_fuzzing_engine")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 # libFuzzer specification.
@@ -70,5 +71,15 @@ java_fuzzing_engine(
     display_name = "Jazzer",
     launcher = "jazzer_launcher.sh",
     library = "@jazzer//agent:jazzer_api_compile_only",
+    visibility = ["//visibility:public"],
+)
+
+# Atheris specification.
+#################################
+
+py_fuzzing_engine(
+    name = "atheris",
+    display_name = "Atheris",
+    launcher = "atheris_launcher.sh",
     visibility = ["//visibility:public"],
 )

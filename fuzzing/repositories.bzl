@@ -80,13 +80,13 @@ def rules_fuzzing_dependencies(oss_fuzz = True, honggfuzz = True, jazzer = True)
         maybe(
             http_jar,
             name = "rules_fuzzing_jazzer",
-            sha256 = "ee6feb569d88962d59cb59e8a31eb9d007c82683f3ebc64955fd5b96f277eec2",
-            url = "https://repo1.maven.org/maven2/com/code-intelligence/jazzer/0.20.1/jazzer-0.20.1.jar",
+            integrity = "sha256-WwSnW/097dHvODZlYdAYLmz7m/Su0t09yBH6aSLdyLs=",
+            url = "https://repo1.maven.org/maven2/com/code-intelligence/jazzer/0.24.0/jazzer-0.24.0.jar",
         )
 
         maybe(
             http_jar,
             name = "rules_fuzzing_jazzer_api",
-            sha256 = "f5a60242bc408f7fa20fccf10d6c5c5ea1fcb3c6f44642fec5af88373ae7aa1b",
-            url = "https://repo1.maven.org/maven2/com/code-intelligence/jazzer-api/0.20.1/jazzer-api-0.20.1.jar",
+            integrity = "sha256-cfhJJDSmErtNa+JrH81AjShCBGN9+N1VcIBfykiWjaQ=",
+            url = "https://repo1.maven.org/maven2/com/code-intelligence/jazzer-api/0.24.0/jazzer-api-0.24.0.jar",
         )

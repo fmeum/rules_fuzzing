@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_java//java:java_library.bzl", "java_library")
 load("//fuzzing:cc_defs.bzl", "cc_fuzzing_engine")
 load("//fuzzing:java_defs.bzl", "java_fuzzing_engine")
 

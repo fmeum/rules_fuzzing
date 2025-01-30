@@ -14,6 +14,7 @@
 
 """Utilities and helper rules for Java fuzz tests."""
 
+load("@rules_java//java/common:java_info.bzl", "JavaInfo")
 load("//fuzzing/private:binary.bzl", "fuzzing_binary_transition")
 load("//fuzzing/private:util.bzl", "runfile_path")
 

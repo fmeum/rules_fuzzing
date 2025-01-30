@@ -14,6 +14,9 @@
 
 """The implementation of the {cc, java}_fuzzing_engine rules."""
 
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+load("@rules_java//java/common:java_info.bzl", "JavaInfo")
+
 FuzzingEngineInfo = provider(
     doc = """
 Provider for storing the language-independent part of the specification of a fuzzing engine.

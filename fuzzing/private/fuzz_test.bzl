@@ -14,7 +14,9 @@
 
 """The implementation of the {cc, java}_fuzz_test rules."""
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_fuzzing_oss_fuzz//:instrum.bzl", "native_library_sanitizer")
+load("@rules_java//java:java_binary.bzl", "java_binary")
 load("//fuzzing/private:binary.bzl", "fuzzing_binary", "fuzzing_binary_uninstrumented")
 load("//fuzzing/private:common.bzl", "fuzzing_corpus", "fuzzing_dictionary", "fuzzing_launcher")
 load("//fuzzing/private:java_utils.bzl", "determine_primary_class", "jazzer_fuzz_binary")
@@ -192,7 +194,7 @@ def cc_fuzz_test(
 
     # tags is not configurable and can thus use append.
     binary_kwargs.setdefault("tags", []).append("manual")
-    native.cc_binary(
+    cc_binary(
         name = raw_binary_name,
         **binary_kwargs
     )
@@ -285,8 +287,7 @@ def java_fuzz_test(
             name = name,
         ))
     target_class_manifest_line = "Jazzer-Fuzz-Target-Class: %s" % target_class
-
-    native.java_binary(
+    java_binary(
         name = metadata_binary_name,
         create_executable = False,
         deploy_manifest_lines = [target_class_manifest_line],
@@ -318,7 +319,7 @@ def java_fuzz_test(
 
     # tags is not configurable and can thus use append.
     binary_kwargs.setdefault("tags", []).append("manual")
-    native.java_binary(
+    java_binary(
         name = raw_target_name,
         srcs = srcs,
         main_class = "com.code_intelligence.jazzer.Jazzer",

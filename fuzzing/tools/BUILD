@@ -16,6 +16,7 @@
 
 load("@fuzzing_py_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 # Tools.
 ########

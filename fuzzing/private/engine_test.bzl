@@ -16,13 +16,15 @@
 
 load("@bazel_skylib//lib:new_sets.bzl", "sets")
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load(":engine.bzl", "FuzzingEngineInfo", "cc_fuzzing_engine")
 load(":util.bzl", "generate_file")
 
 # Shared fixtures.
 
 def _setup_common_stubs():
-    native.cc_library(
+    cc_library(
         name = "library_stub",
         srcs = [],
         testonly = 1,
